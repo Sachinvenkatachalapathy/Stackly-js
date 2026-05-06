@@ -1,64 +1,90 @@
-var num = 50;
-num = 100;
-console.log(num);
+let allProducts = [];
+const container = document.getElementById('productContainer');
+const loading = document.getElementById('loading');
+const errorMsg = document.getElementById('error-message');
 
-let marks = 80;
-marks = marks + 10;
-console.log(marks);
+// 1. API Integration
+async function fetchProducts() {
+    try {
+        const response = await fetch('https://fakestoreapi.com/products');
+        if (!response.ok) throw new Error("Network response was not ok");
+        
+        allProducts = await response.json();
+        loading.classList.add('hidden');
+        displayProducts(allProducts);
+    } catch (error) {
+        loading.classList.add('hidden');
+        errorMsg.classList.remove('hidden');
+        console.error("Fetch Error:", error);
+    }
+}
 
-let marks = 80;
-marks = marks + 10;
-console.log(marks);
+// 2. Dynamic UI Rendering
+function displayProducts(products) {
+    container.innerHTML = "";
+    
+    products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        // Truncate Title & Description
+        const shortTitle = product.title.length > 50 ? product.title.substring(0, 47) + "..." : product.title;
+        const shortDesc = product.description.length > 60 ? product.description.substring(0, 57) + "..." : product.description;
 
-let marks = 80;
-marks = marks + 10;
-console.log(marks);
+        card.innerHTML = `
+            <img src="${product.image}" alt="${product.title}">
+            <h3>${shortTitle}</h3>
+            <p class="price">$${product.price}</p>
+            <p class="desc">${shortDesc}</p>
+            <button onclick="viewDetails(${product.id})">View More</button>
+            <button style="margin-top: 5px; background: #10b981;" onclick="addToCart(${product.id})">Add to Cart</button>
+        `;
+        container.appendChild(card);
+    });
+}
 
-console.log(typeof "JavaScript");
-console.log(typeof 250);
-console.log(typeof false);
+// 4. Functional Requirements & Advanced Features
+function viewDetails(id) {
+    const product = allProducts.find(p => p.id === id);
+    alert(`FULL DETAILS:\n\nTitle: ${product.title}\n\nDescription: ${product.description}\n\nCategory: ${product.category}`);
+}
 
-let fruits = ["Apple", "Banana", "Mango", "Orange", "Grapes"];
-console.log(fruits);
-console.log(fruits[0]);
-console.log(fruits[fruits.length - 1]);
+function addToCart(id) {
+    const product = allProducts.find(p => p.id === id);
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    cart.push(product);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    alert(`${product.title} added to cart!`);
+}
 
-let fruits = ["Apple", "Banana", "Mango", "Orange", "Grapes"];
-console.log(fruits);
-console.log(fruits[0]);
-console.log(fruits[fruits.length - 1]);
+// 🔍 Search & Filters
+const filterLogic = () => {
+    let filtered = [...allProducts];
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    const sortOrder = document.getElementById('sortPrice').value;
 
-let student = {
-  name: "Naveen",
-  age: 20,
-  course: "MERN"
+    // Search filter
+    if (searchTerm) {
+        filtered = filtered.filter(p => p.title.toLowerCase().includes(searchTerm));
+    }
+
+    // Category filter
+    if (category !== 'all') {
+        filtered = filtered.filter(p => p.category === category);
+    }
+
+    // Sorting
+    if (sortOrder === 'low') filtered.sort((a, b) => a.price - b.price);
+    if (sortOrder === 'high') filtered.sort((a, b) => b.price - a.price);
+
+    displayProducts(filtered);
 };
-console.log(student.name);
-console.log(student.age);
 
-console.log(20 + 10);
-console.log(50 - 25);
-console.log(5 * 5);
-console.log(100 / 4);
-console.log(20 % 3);
+// Event Listeners
+document.getElementById('searchInput').addEventListener('input', filterLogic);
+document.getElementById('categoryFilter').addEventListener('change', filterLogic);
+document.getElementById('sortPrice').addEventListener('change', filterLogic);
 
-let x = 5;
-x++;
-console.log(x);
-
-let y = 10;
-y--;
-console.log(y);
-
-console.log(10 > 5);
-console.log(5 < 2);
-console.log(20 == "20");
-console.log(15 === "15");
-console.log(10 != 8);
-
-console.log(5 > 2 && 10 > 3);
-console.log(7 < 5 || 8 > 2);
-console.log(!(10 > 5))
-
-let age = 18;
-console.log(age >= 18 ? "Eligible" : "Not Eligible");
+// Initialize
+fetchProducts();
